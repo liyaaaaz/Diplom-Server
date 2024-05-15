@@ -20,8 +20,11 @@ export const order = async (req,res) => {
          firstName: req.body.firstName,
          surname: req.body.surname,
          secondName: req.body.secondName,
-         comment : req.body.comment,
+         products:req.body.products,
          user: req.userId,
+         totalPrice: req.body.totalPrice,
+         adress: req.body.adress,
+         comment : req.body.comment,
      });
  
      const getorder = await doc.save();

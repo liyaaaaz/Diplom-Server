@@ -20,3 +20,7 @@ export const orderValidation = [
     body('secondName','Отчество должно содержать минимум 2 буквы').optional().isLength({min:2}),
 ];
 
+export const productValidation = [
+    body('price', 'Цена должна быть указана цифрами').isNumeric(),
+];
+

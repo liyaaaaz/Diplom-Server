@@ -1,9 +1,10 @@
+import Products from "../models/Products.js";
 import Product from "../models/Products.js";
 
 export const getAllProducts = async (req, res) => {
   try {
     const prod = await Product.find({});
-    res.status(200).json({ prod });
+    res.status(200).json(prod);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -15,18 +16,20 @@ export const editProducts = async (req, res) => {
       name,
       price,
       pictures,
-      category,
+      subcategory,
       description,
       manufacturer,
+      discount,
     } = req.body;
     const productId = req.params.id;
     const product = await Product.findByIdAndUpdate(productId, {
       name: name,
       price: price,
       pictures: pictures,
-      category: category,
+      subcategory: subcategory,
       description: description,
-      manufacturer: manufacturer,   
+      manufacturer: manufacturer,
+      discount: discount,
     });
 
     if (product) {
@@ -40,21 +43,23 @@ export const editProducts = async (req, res) => {
 export const newProducts = async (req, res) => {
   try {
     const {
-        name,
-        price,
-        pictures,
-        category,
-        description,
-        manufacturer,
+      name,
+      price,
+      pictures,
+      subcategory,
+      description,
+      manufacturer,
+      discount,
     } = req.body;
 
     const prod = await Product.create({
-        name,
-        price,
-        pictures,
-        category,
-        description,
-        manufacturer,
+      name,
+      price,
+      pictures,
+      subcategory,
+      description,
+      manufacturer,
+      discount,
     });
 
     if (prod) {
@@ -86,25 +91,25 @@ export const deleteProducts = async (req, res) => {
   }
 };
 
-// export const likeCloth = async (req, res) => {
-//   try {
-//     const user = req.user;
-//     const clothId = req.params.id;
+export const basketProduct = async (req, res) => {
+  try {
+    const user = req.user;
+    const productId = req.params.id;
 
-//     const cloth = await Cloth.findById(clothId);
+    const product = await Products.findById(productId);
 
-//     const isLiked = user.likedClothes.some((likedCloth) =>
-//       likedCloth.equals(cloth._id)
-//     );
+    const isBasket = user.basketProduct.some((basketProduct) =>
+      basketProduct.equals(product._id)
+    );
 
-//     if (isLiked) {
-//       user.likedClothes.pull(cloth._id);
-//     } else {
-//       user.likedClothes.push(cloth._id);
-//     }
+    if (isBasket) {
+      user.basketProduct.pull(product._id);
+    } else {
+      user.basketProduct.push(product._id);
+    }
 
-//     await user.save();
-//   } catch (err) {
-//     res.status(400).json({ error: err.message });
-//   }
-// };
+    await user.save();
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
