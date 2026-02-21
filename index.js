@@ -1,11 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
-import {
-  registerValidation,
-  loginValidation,
-  orderValidation,
-  productValidation,
-} from "./validations.js";
+import { registerValidation, orderValidation } from "./validations.js";
 import multer from "multer";
 import fs from "fs";
 import * as checkAuth from "./utils/checkAuth.js";
@@ -13,45 +8,26 @@ import * as UserController from "./controllers/UserController.js";
 import * as OrderController from "./controllers/OrderController.js";
 import * as ProductsController from "./controllers/ProductsController.js";
 import cors from "cors";
-
 import Auth from "./routes/Auth.js";
-
 import dotenv from "dotenv";
-// import authRoutes from "./routes/Auth.js";
-// import clothRoutes from "./routes/Products.js";
-// import { connectDB } from "./connection/connectdb.js";
-// import { register } from "./controllers/UserController.js";
 
-// const app = express();
+// 1. Сначала загружаем переменные окружения
+dotenv.config();
 
-// app.use("/auth", authRoutes);
-// app.post("/auth/register", register);
+// 2. Создаем приложение
+const app = express();
 
-// app.use("/cloth", clothRoutes);
+// 3. Middleware
+app.use(cors());
+app.use(express.json());
 
-// const PORT = process.env.PORT || 5000;
-
-// connectDB().then(() => {
-//   app.listen(PORT, () => {
-//     console.log(`[server] alive on ${PORT}`);
-//   });
-// });
-
+// 4. Подключаемся к БД (используем переменную окружения)
 mongoose
-  .connect(
-    "mongodb+srv://admin:wwwwww@cluster.dpy4npv.mongodb.net/Sklad5?retryWrites=true&w=majority&appName=Cluster"
-  )
+  .connect(process.env.MONGO_URL)
   .then(() => console.log("DB OK"))
   .catch((err) => console.log("DB error", err));
 
-const app = express();
-
-dotenv.config({ path: ".env.dev" });
-
-app.use(cors());
-
-app.use(express.json());
-
+// 5. Настройка загрузки файлов
 const storage = multer.diskStorage({
   destination: (_, __, cb) => {
     if (!fs.existsSync("uploads")) {
@@ -63,53 +39,38 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
-
 const upload = multer({ storage });
 
+// 6. Статические файлы
+app.use("/uploads", express.static("uploads"));
+
+// 7. Маршруты (Routes)
 app.use("/auth", Auth);
 app.post("/auth/register", registerValidation, UserController.register);
 app.get("/auth/me", checkAuth.checkAuth, UserController.getMe);
+app.put("/me", checkAuth.checkAuth, UserController.updateProfile);
+app.get("/me/orders", checkAuth.checkAuth, OrderController.getUserOrders);
 
-app.use("/uploads", express.static("uploads"));
 app.post("/upload", upload.single("image"), (req, res) => {
   res.json({
     url: `/uploads/${req.file.originalname}`,
   });
 });
 
-app.post(
-  "/bag/order",
-  checkAuth.checkAuth,
-  orderValidation,
-  OrderController.order
-);
-app.get("/bag/order", OrderController.getAllOrdes);
+app.post("/postorder", checkAuth.checkAuth, OrderController.order);
+app.get("/order", OrderController.getAllOrdes);
 
 app.get("/products", ProductsController.getAllProducts);
+app.get("/products/getDiscountedProducts", ProductsController.getDiscountedProducts);
 app.post("/createproducts", ProductsController.newProducts);
-app.post(
-  "/deleteproducts",
-  checkAuth.verifyAdminToken,
-  ProductsController.deleteProducts
-);
-app.post(
-  "/editproducts",
-  checkAuth.verifyAdminToken,
-  ProductsController.editProducts
-);
+app.post("/deleteproducts", checkAuth.verifyAdminToken, ProductsController.deleteProducts);
+app.post("/products/:id", checkAuth.verifyAdminToken, ProductsController.editProducts);
 
-// const PORT = process.env.PORT || 5000;
-
-// connectDB().then(() => {
-//   app.listen(PORT, () => {
-//     console.log(`[server] alive on ${PORT}`);
-//   });
-// });
+// 8. Запуск сервера
 const port = process.env.PORT || 4444;
 app.listen(port, (err) => {
   if (err) {
     return console.log(err);
   }
-
-  console.log("server ok");
+  console.log(`Server OK on port ${port}`);
 });
