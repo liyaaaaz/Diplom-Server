@@ -6,7 +6,7 @@ export const checkAuth = async (req, res, next) => {
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, "secret124");
+     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       req.userId = decoded._id;
       next();
