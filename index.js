@@ -105,7 +105,8 @@ app.post(
 //     console.log(`[server] alive on ${PORT}`);
 //   });
 // });
-app.listen(4444, (err) => {
+const port = process.env.PORT || 4444;
+app.listen(port, (err) => {
   if (err) {
     return console.log(err);
   }
